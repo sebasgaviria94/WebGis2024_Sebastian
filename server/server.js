@@ -38,18 +38,36 @@ app.get('/', (req, res) => {
 // Endpoint para consultar todas las tablas del esquema public
 app.get('/tablas', async (req, res) => {
     try {
-        const query = `
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public';
-    `;
-        const result = await client.query(query);
-        res.json(result.rows);
+      const query = `
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public'
+        AND table_name NOT IN ('geography_columns', 'geometry_columns', 'spatial_ref_sys');
+      `;
+      const result = await client.query(query);
+      res.json(result.rows);
     } catch (err) {
-        console.error('Error ejecutando la consulta', err);
-        res.status(500).send('Error al obtener las tablas');
-    }
-});
+      console.error('Error ejecutando la consulta', err);
+      res.status(500).send('Error al obtener las tablas');
+    }
+  });
+
+  // tablas geo
+
+app.get('/tablasgeo', async (req, res) => {
+    try {
+      const query = `
+        SELECT f_table_name AS table_name
+        FROM geometry_columns
+        WHERE f_table_schema = 'public';
+      `;
+      const result = await client.query(query);
+      res.json(result.rows);
+    } catch (err) {
+      console.error('Error ejecutando la consulta', err);
+      res.status(500).send('Error al obtener las tablas con geometría');
+    }
+  });
 
 // Ruta para consultar datos de una tabla específica en el esquema 'public'
 app.get('/tablas/:nombreTabla', async (req, res) => {
